@@ -156,7 +156,8 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
             raise FileNotFoundError(e_s)
 
     is_singlestim = is_singlestim_dataframe(data)
-
+    is_tactile = 'rotation' in data.columns
+    #is_tactile = is_tactile_dataframe(data)
     # Make sure .csv file has all necessary columns:
     has_cols = set(data.columns)
     needs_cols = set(['PTS_AMP', 'PTS_FILE', 'PTS_FREQ', 'PTS_PULSE_DUR',
@@ -194,6 +195,8 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
 
     # Build data matrix:
     rows = []
+    imshape = (943,1920)
+    img = np.zeros(imshape)
     for idx, row in data.iterrows():
         # Extract shape descriptors from phosphene drawing:
         if pd.isnull(row['PTS_FILE']):
@@ -204,7 +207,10 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
                 e_s = ("ID %d %s, %s: 'PTS_FILE' is "
                        "empty") % (idx, row['PTS_ELECTRODE1'],
                                    row['PTS_ELECTRODE2'])
-            raise FileNotFoundError(e_s)
+            row['PTS_FILE'] = ''
+            img = np.zeros(imshape)
+
+            #raise FileNotFoundError(e_s)
         else:
             try:
                 img = skio.imread(os.path.join(os.path.dirname(fname),
@@ -217,7 +223,8 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
                     s = ('Column "PTS_FILE" must either specify an absolute '
                          'path or a relative path that starts in the '
                          'directory of `fname`.')
-                    raise FileNotFoundError(s)
+                    row['PTS_FILE'] = ''
+                    #raise FileNotFoundError(s)
         columns = {
             'subject': row['subject_id'],
             'filename': row['PTS_FILE'],
@@ -234,6 +241,10 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
         else:
             columns.update({'electrode1': row['PTS_ELECTRODE1'],
                             'electrode2': row['PTS_ELECTRODE2']})
+        if is_tactile:
+        	columns.update({'rotation': row['rotation'], 
+        					'dist2screen': row['dist2screen'],
+        					'dist2board': row['dist2board']})
         # Add shape descriptors:
         props = imgproc.calc_shape_descriptors(img)
         columns.update(props)
@@ -312,6 +323,27 @@ def load_subjects(fname, auto_fetch=True):
     return df.drop(columns=['xmin', 'xmax', 'ymin', 'ymax',
                             'implant_type_str'])
 
+# def is_tactile_dataframe(data):
+# 	"""Determines whether a DataFrame contains tactile task information
+
+# 	Parameters
+# 	----------
+# 	data : pd.DataFrame
+# 		DatFrame containing the shape data
+
+# 	Returns
+# 	-------
+# 	is_tactile: bool
+# 		Whether DataFrame contains tacle data (True) or not (False).
+# 	"""
+# 	#if not np.any([c in data.columns for c in ['rotation', 'dist2screen',
+#     # 'dist2board']]):
+#     #   raise ValueError(('Incompatible DataFrame. Must contain one of'
+#     #                     'these columns: rotation, dist2board, dist2screen '))
+    is_tactile =('rotation' in data.columns 
+							and 'dist2screen' in data.columns and 'dist2board'  in data.columns)
+    
+#     return is_tactile
 
 def is_singlestim_dataframe(data):
     """Determines whether a DataFrame contains single or multi electrode stim
