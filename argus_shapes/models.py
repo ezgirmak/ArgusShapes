@@ -151,6 +151,9 @@ class BaseModel(sklb.BaseEstimator):
         if not isinstance(electrode, six.string_types):
             raise TypeError("`electrode` must be a string.")
         # Calculate current map with method from derived class:
+        if self._ename(electrode) not in self._curr_map:
+            X = {'electrode': self._ename(electrode)}
+            self.calc_curr_map(pd.DataFrame([X]))
         curr_map = self._curr_map[self._ename(electrode)]
         if not isinstance(curr_map, np.ndarray):
             raise TypeError(("Method '_curr_map' must return a np.ndarray, "
@@ -190,7 +193,7 @@ class BaseModel(sklb.BaseEstimator):
         self.calc_curr_map(X)
 
         # Predict percept
-        engine = 'serial' if self.engine is 'cython' else self.engine
+        engine = 'serial' if self.engine == 'cython' else self.engine
         y_pred = p2pu.parfor(self._predicts, X.iterrows(),
                              engine=engine, scheduler=self.scheduler,
                              n_jobs=self.n_jobs)
@@ -205,7 +208,7 @@ class BaseModel(sklb.BaseEstimator):
         raise NotImplementedError
 
 
-class ScoreboardMixin(BaseModel):
+class ScoreboardMixin(object):
     """Scoreboard model"""
 
     def _sets_default_params(self):
@@ -230,7 +233,7 @@ class ScoreboardMixin(BaseModel):
         return cm
 
 
-class AxonMapMixin(BaseModel):
+class AxonMapMixin(object):
     """Axon map model"""
 
     def _sets_default_params(self):
@@ -491,7 +494,7 @@ class AxonMapMixin(BaseModel):
         return np.array(ecm, dtype=float).reshape(self.xret.shape)
 
 
-class RetinalCoordTrafoMixin(BaseModel):
+class RetinalCoordTrafoMixin(object):
 
     def _sets_default_params(self):
         super(RetinalCoordTrafoMixin, self)._sets_default_params()
@@ -563,7 +566,7 @@ class RetinalCoordTrafoMixin(BaseModel):
         self.yret = yret.reshape(ydva.shape)
 
 
-class RetinalGridMixin(BaseModel):
+class RetinalGridMixin(object):
 
     def _sets_default_params(self):
         super(RetinalGridMixin, self)._sets_default_params()
@@ -591,7 +594,7 @@ class RetinalGridMixin(BaseModel):
         self.yret = utils.dva2ret(ydva)
 
 
-class ShapeLossMixin(BaseModel):
+class ShapeLossMixin(object):
 
     def _sets_default_params(self):
         super(ShapeLossMixin, self)._sets_default_params()
@@ -656,7 +659,7 @@ class ShapeLossMixin(BaseModel):
         return self.calc_shape_loss(y, self.predict(X))
 
 
-class ModelA(ShapeLossMixin, RetinalGridMixin, ScoreboardMixin):
+class ModelA(ShapeLossMixin, RetinalGridMixin, ScoreboardMixin, BaseModel):
     """Scoreboard model with shape descriptor loss"""
 
     def get_params(self, deep=True):
@@ -665,7 +668,8 @@ class ModelA(ShapeLossMixin, RetinalGridMixin, ScoreboardMixin):
         return params
 
 
-class ModelB(ShapeLossMixin, RetinalCoordTrafoMixin, ScoreboardMixin):
+class ModelB(ShapeLossMixin, RetinalCoordTrafoMixin, ScoreboardMixin,
+             BaseModel):
     """Scoreboard model with perspective transform and shape descriptor loss"""
 
     def get_params(self, deep=True):
@@ -674,7 +678,7 @@ class ModelB(ShapeLossMixin, RetinalCoordTrafoMixin, ScoreboardMixin):
         return params
 
 
-class ModelC(ShapeLossMixin, RetinalGridMixin, AxonMapMixin):
+class ModelC(ShapeLossMixin, RetinalGridMixin, AxonMapMixin, BaseModel):
     """Axon map model with shape descriptor loss"""
 
     def get_params(self, deep=True):
@@ -683,7 +687,7 @@ class ModelC(ShapeLossMixin, RetinalGridMixin, AxonMapMixin):
         return params
 
 
-class ModelD(ShapeLossMixin, RetinalCoordTrafoMixin, AxonMapMixin):
+class ModelD(ShapeLossMixin, RetinalCoordTrafoMixin, AxonMapMixin, BaseModel):
     """Axon map model with perspective transform and shape descriptor loss"""
 
     def get_params(self, deep=True):
