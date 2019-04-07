@@ -160,7 +160,11 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
     #is_tactile = is_tactile_dataframe(data)
     # Make sure .csv file has all necessary columns:
     has_cols = set(data.columns)
-    needs_cols = set(['PTS_AMP', 'PTS_FILE', 'PTS_FREQ', 'PTS_PULSE_DUR',
+    if is_singlestim:
+    	needs_cols = set(['PTS_AMP', 'PTS_FILE', 'PTS_FREQ', 'PTS_PULSE_DUR',
+                      'date', 'stim_class', 'subject_id'] + add_cols)
+    else:
+    	needs_cols = set(['PTS_AMP1','PTS_AMP2', 'PTS_FILE', 'PTS_FREQ', 'PTS_PULSE_DUR',
                       'date', 'stim_class', 'subject_id'] + add_cols)
     if bool(needs_cols - has_cols):
         err = "The following required columns are missing: "
@@ -231,16 +235,18 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
             'image': img,
             'img_shape': img.shape,
             'stim_class': row['stim_class'],
-            'amp': row['PTS_AMP'],
             'freq': row['PTS_FREQ'],
             'pdur': row['PTS_PULSE_DUR'],
             'date': row['date']
         }
         if is_singlestim:
-            columns.update({'electrode': row['PTS_ELECTRODE']})
+            columns.update({'electrode': row['PTS_ELECTRODE'],
+            	  			'amp': row['PTS_AMP']})
         else:
             columns.update({'electrode1': row['PTS_ELECTRODE1'],
-                            'electrode2': row['PTS_ELECTRODE2']})
+                            'electrode2': row['PTS_ELECTRODE2'],
+                            'amp1': row['PTS_AMP1'],
+                            'amp2': row['PTS_AMP2']})
         if is_tactile:
         	columns.update({'rotation': row['rotation'], 
         					'dist2screen': row['dist2screen'],
