@@ -103,8 +103,6 @@ def load_data(fname, subject=None, electrodes=None, amp=None, add_cols=[],
     """Loads shuffled shape data
 
     Shape data is supposed to live in a .csv file with the following columns:
-    - `PTS_AMP`: Current amplitude as multiple of threshold current
-    - `PTS_ELECTRODE`: Name of the electrode (e.g., 'A1')
     - `PTS_FILE`: Name of the drawing file
     - `PTS_FREQ`: Stimulation frequency (Hz)
     - `PTS_PULSE_DUR`: Stimulation pulse duration (ms)
@@ -431,7 +429,8 @@ def _calcs_mean_image(Xy, groupcols, thresh=True, max_area=np.inf):
     return columns
 
 
-def calc_mean_images(Xy, groupby=['subject', 'amp', 'electrode'], thresh=True,
+    
+def calc_mean_images(Xy,  groupby=['subject', 'amp', 'electrode'], thresh=True,
                      max_area=np.inf):
     """Extract mean images on an electrode from all raw trial drawings
 
